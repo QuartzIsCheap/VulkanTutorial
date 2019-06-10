@@ -97,7 +97,7 @@ void cleanup() {
     vkDestroyDevice(device, nullptr);
 
     if (enableValidationLayers) {
-        DestroyDebugReportCallbackEXT(instance, callback, nullptr);
+        DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
     }
 
     vkDestroySurfaceKHR(instance, surface, nullptr);
@@ -168,7 +168,7 @@ If the swap chain turns out to be out of date when attempting to acquire an
 image, then it is no longer possible to present to it. Therefore we should
 immediately recreate the swap chain and try again in the next `drawFrame` call.
 
-However, if we abort drawing at this point then the fence will be never have
+However, if we abort drawing at this point then the fence will never have
 been submitted with `vkQueueSubmit` and it'll be in an unexpected state when we
 try to wait for it later on. We could recreate the fences as part of swap chain
 recreation, but it's easier to move the `vkResetFences` call:
@@ -223,7 +223,7 @@ if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebu
 }
 ```
 
-Now to actually detect resizes we can use the `glfwSetFramebufferSizeCallback` function in the GLFW framework to set up a callback:
+It is important to do this after `vkQueuePresentKHR` to ensure that the semaphores are in a consistent state, otherwise a signalled semaphore may never be properly waited upon. Now to actually detect resizes we can use the `glfwSetFramebufferSizeCallback` function in the GLFW framework to set up a callback:
 
 ```c++
 void initWindow() {

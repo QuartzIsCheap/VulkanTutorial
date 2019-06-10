@@ -54,11 +54,11 @@ An instance is created by describing your application and any API extensions you
 will be using. After creating the instance, you can query for Vulkan supported
 hardware and select one or more `VkPhysicalDevice`s to use for operations. You
 can query for properties like VRAM size and device capabilities to select
-desired devices, for example to prefer using dedicated graphics cards. 
+desired devices, for example to prefer using dedicated graphics cards.
 
 ### Step 2 - Logical device and queue families
 
-After selecting the right hardware device to use, you need to create a VkDevice 
+After selecting the right hardware device to use, you need to create a VkDevice
 (logical device), where you describe more specifically which
 VkPhysicalDeviceFeatures you will be using, like multi viewport rendering and
 64 bit floats. You also need to specify which queue families you would like to
@@ -79,8 +79,8 @@ window to present rendered images to. Windows can be created with the native
 platform APIs or libraries like [GLFW](http://www.glfw.org/) and [SDL](https://www.libsdl.org/).
 We will be using GLFW in this tutorial, but more about that in the next chapter.
 
-We need two more components to actually render to a window: a window surface 
-(VkSurfaceKHR) and a swap chain (VkSwapChainKHR). Note the `KHR` postfix, which
+We need two more components to actually render to a window: a window surface
+(VkSurfaceKHR) and a swap chain (VkSwapchainKHR). Note the `KHR` postfix, which
 means that these objects are part of a Vulkan extension. The Vulkan API itself
 is completely platform agnostic, which is why we need to use the standardized
 WSI (Window System Interface) extension to interact with the window manager. The
@@ -99,6 +99,8 @@ screen at some point. The number of render targets and conditions for presenting
 finished images to the screen depends on the present mode. Common present modes
 are  double buffering (vsync) and triple buffering. We'll look into these in the
 swap chain creation chapter.
+
+Some platforms allow you to render directly to a display without interacting with any window manager through the `VK_KHR_display` and `VK_KHR_display_swapchain` extensions. These allow you to create a surface that represents the entire screen and could be used to implement your own window manager, for example.
 
 ### Step 4 - Image views and framebuffers
 
@@ -129,7 +131,7 @@ driver also needs to know which render targets will be used in the pipeline,
 which we specify by referencing the render pass.
 
 One of the most distinctive features of Vulkan compared to existing APIs, is
-that almost all configuration of the graphics pipeline needs to be in advance.
+that almost all configuration of the graphics pipeline needs to be set in advance.
 That means that if you want to switch to a different shader or slightly
 change your vertex layout, then you need to entirely recreate the graphics
 pipeline. That means that you will have to create many VkPipeline objects in

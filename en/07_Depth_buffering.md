@@ -362,7 +362,7 @@ ready for usage as depth attachment when it needs to be.
 ## Render pass
 
 We're now going to modify `createRenderPass` to include a depth attachment.
-First specify the `VkAttachementDescription`:
+First specify the `VkAttachmentDescription`:
 
 ```c++
 VkAttachmentDescription depthAttachment = {};
@@ -475,6 +475,8 @@ lies at the far view plane and `0.0` at the near view plane. The initial value
 at each point in the depth buffer should be the furthest possible depth, which
 is `1.0`.
 
+Note that the order of `clearValues` should be identical to the order of your attachments.
+
 ## Depth and stencil state
 
 The depth attachment is ready to be used now, but depth testing still needs to
@@ -546,6 +548,12 @@ function to recreate the depth resources in that case:
 
 ```c++
 void recreateSwapChain() {
+    int width = 0, height = 0;
+    while (width == 0 || height == 0) {
+        glfwGetFramebufferSize(window, &width, &height);
+        glfwWaitEvents();
+    }
+
     vkDeviceWaitIdle(device);
 
     cleanupSwapChain();
@@ -556,6 +564,9 @@ void recreateSwapChain() {
     createGraphicsPipeline();
     createDepthResources();
     createFramebuffers();
+    createUniformBuffers();
+    createDescriptorPool();
+    createDescriptorSets();
     createCommandBuffers();
 }
 ```

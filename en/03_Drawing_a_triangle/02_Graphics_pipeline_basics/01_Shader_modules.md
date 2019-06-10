@@ -87,11 +87,6 @@ code looks like this:
 
 ```glsl
 #version 450
-#extension GL_ARB_separate_shader_objects : enable
-
-out gl_PerVertex {
-    vec4 gl_Position;
-};
 
 vec2 positions[3] = vec2[](
     vec2(0.0, -0.5),
@@ -110,8 +105,7 @@ the vertex buffer, but in our case it will be an index into a hardcoded array
 of vertex data. The position of each vertex is accessed from the constant array
 in the shader and combined with dummy `z` and `w` components to produce a
 position in clip coordinates. The built-in variable `gl_Position` functions as
-the output. The `GL_ARB_separate_shader_objects` extension is required for
-Vulkan shaders to work.
+the output.
 
 ## Fragment shader
 
@@ -204,10 +198,6 @@ The contents of `shader.vert` should be:
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-out gl_PerVertex {
-    vec4 gl_Position;
-};
-
 layout(location = 0) out vec3 fragColor;
 
 vec2 positions[3] = vec2[](
@@ -251,8 +241,8 @@ We're now going to compile these into SPIR-V bytecode using the
 Create a `compile.bat` file with the following contents:
 
 ```bash
-C:/VulkanSDK/1.0.17.0/Bin32/glslangValidator.exe -V shader.vert
-C:/VulkanSDK/1.0.17.0/Bin32/glslangValidator.exe -V shader.frag
+C:/VulkanSDK/x.x.x.x/Bin32/glslangValidator.exe -V shader.vert
+C:/VulkanSDK/x.x.x.x/Bin32/glslangValidator.exe -V shader.frag
 pause
 ```
 
@@ -286,6 +276,8 @@ and run the compile script again. Also try running the compiler without any
 arguments to see what kinds of flags it supports. It can, for example, also
 output the bytecode into a human-readable format so you can see exactly what
 your shader is doing and any optimizations that have been applied at this stage.
+
+Compiling shaders on the commandline is one of the most straightforward options and it's the one that we'll use in this tutorial, but it's also possible to compile shaders directly from your own code. The Vulkan SDK includes [libshaderc](https://github.com/google/shaderc), which is a library to compile GLSL code to SPIR-V from within your program.
 
 ## Loading a shader
 
@@ -349,7 +341,7 @@ void createGraphicsPipeline() {
 ```
 
 Make sure that the shaders are loaded correctly by printing the size of the
-buffers and checking if they match the actual file size in bytes.
+buffers and checking if they match the actual file size in bytes. Note that the code doesn't need to be null terminated since it's binary code and we will later be explicit about its size.
 
 ## Creating shader modules
 
@@ -402,25 +394,18 @@ shader module:
 return shaderModule;
 ```
 
-The shader module objects are only required during the pipeline creation
-process, so instead of declaring them as class members, we'll make them local
-variables in the `createGraphicsPipeline` function:
+Shader modules are just a thin wrapper around the shader bytecode that we've previously loaded from a file and the functions defined in it. The compilation and linking of the SPIR-V bytecode to machine code for execution by the GPU doesn't happen until the graphics pipeline is created. That means that we're allowed to destroy the shader modules again as soon as pipeline creation is finished, which is why we'll make them local variables in the `createGraphicsPipeline` function instead of class members:
 
 ```c++
-VkShaderModule vertShaderModule;
-VkShaderModule fragShaderModule;
+void createGraphicsPipeline() {
+    auto vertShaderCode = readFile("shaders/vert.spv");
+    auto fragShaderCode = readFile("shaders/frag.spv");
+
+    VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
+    VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
 ```
 
-Call the helper function we created to load the shader modules:
-
-```c++
-vertShaderModule = createShaderModule(vertShaderCode);
-fragShaderModule = createShaderModule(fragShaderCode);
-```
-
-They should be cleaned up when the graphics pipeline has been created and
-`createGraphicsPipeline` returns, so make sure that they are deleted at the end
-of the function:
+The cleanup should then happen at the end of the function by adding two calls to `vkDestroyShaderModule`. ALl of the remaining code in this chapter will be inserted before these lines.
 
 ```c++
     ...
@@ -431,11 +416,7 @@ of the function:
 
 ## Shader stage creation
 
-The `VkShaderModule` object is just a dumb wrapper around the bytecode buffer.
-The shaders aren't linked to each other yet and they haven't even been given a
-purpose yet. Assigning a shader module to either the vertex or fragment shader
-stage in the pipeline happens through a `VkPipelineShaderStageCreateInfo`
-structure, which is part of the actual pipeline creation process.
+To actually use the shaders we'll need to assign them to a specific pipeline stage through `VkPipelineShaderStageCreateInfo` structures as part of the actual pipeline creation process.
 
 We'll start by filling in the structure for the vertex shader, again in the
 `createGraphicsPipeline` function.
@@ -456,7 +437,7 @@ vertShaderStageInfo.pName = "main";
 ```
 
 The next two members specify the shader module containing the code, and the
-function to invoke. That means that it's possible to combine multiple fragment
+function to invoke, known as the *entrypoint*. That means that it's possible to combine multiple fragment
 shaders into a single shader module and use different entry points to
 differentiate between their behaviors. In this case we'll stick to the standard
 `main`, however.

@@ -68,9 +68,7 @@ device level, which we'll see [later on](!en/Drawing_a_triangle/Setup/Logical_de
 
 In this section we'll see how to enable the standard diagnostics layers provided
 by the Vulkan SDK. Just like extensions, validation layers need to be enabled by
-specifying their name. Instead of having to explicitly specify all of the useful
-layers, the SDK allows you to request the `VK_LAYER_LUNARG_standard_validation`
-layer that implicitly enables a whole range of useful diagnostics layers.
+specifying their name. All of the useful standard validation is bundled into a layer included in the SDK that is known as `VK_LAYER_KHRONOS_validation`.
 
 Let's first add two configuration variables to the program to specify the layers
 to enable and whether to enable them or not. I've chosen to base that value on
@@ -82,7 +80,7 @@ const int WIDTH = 800;
 const int HEIGHT = 600;
 
 const std::vector<const char*> validationLayers = {
-    "VK_LAYER_LUNARG_standard_validation"
+    "VK_LAYER_KHRONOS_validation"
 };
 
 #ifdef NDEBUG
@@ -145,10 +143,7 @@ void createInstance() {
 ```
 
 Now run the program in debug mode and ensure that the error does not occur. If
-it does, then make sure you have properly installed the Vulkan SDK. If none or
-very few layers are being reported, then you may be dealing with
-[this issue](https://vulkan.lunarg.com/app/issues/578e8c8d5698c020d71580fc)
-(requires a LunarG account to view). See that page for help with fixing it.
+it does, then have a look at the FAQ.
 
 Finally, modify the `VkInstanceCreateInfo` struct instantiation to include the
 validation layer names if they are enabled:
@@ -169,7 +164,7 @@ If the check was successful then `vkCreateInstance` should not ever return a
 
 Unfortunately just enabling the layers doesn't help much, because they currently
 have no way to relay the debug messages back to our program. To receive those
-messages we have to set up a callback, which requires the `VK_EXT_debug_utils`
+messages we have to set up a debug messenger with a callback, which requires the `VK_EXT_debug_utils`
 extension.
 
 We'll first create a `getRequiredExtensions` function that will return the
@@ -192,7 +187,7 @@ std::vector<const char*> getRequiredExtensions() {
 }
 ```
 
-The extensions specified by GLFW are always required, but the debug report
+The extensions specified by GLFW are always required, but the debug messenger
 extension is conditionally added. Note that I've used the
 `VK_EXT_DEBUG_UTILS_EXTENSION_NAME` macro here which is equal to the literal
 string "VK_EXT_debug_utils". Using this macro lets you avoid typos.
@@ -210,7 +205,7 @@ Run the program to make sure you don't receive a
 existence of this extension, because it should be implied by the availability of
 the validation layers.
 
-Now let's see what a callback function looks like. Add a new static member
+Now let's see what a debug callback function looks like. Add a new static member
 function called `debugCallback` with the `PFN_vkDebugUtilsMessengerCallbackEXT`
 prototype. The `VKAPI_ATTR` and `VKAPI_CALL` ensure that the function has the
 right signature for Vulkan to call it.
@@ -265,29 +260,29 @@ always return `VK_FALSE`.
 
 All that remains now is telling Vulkan about the callback function. Perhaps
 somewhat surprisingly, even the debug callback in Vulkan is managed with a
-handle that needs to be explicitly created and destroyed. Such a callback is called a *messenger* and you can have as many of them as you want. Add a class member for
+handle that needs to be explicitly created and destroyed. Such a callback is part of a *debug messenger* and you can have as many of them as you want. Add a class member for
 this handle right under `instance`:
 
 ```c++
-VkDebugUtilsMessengerEXT callback;
+VkDebugUtilsMessengerEXT debugMessenger;
 ```
 
-Now add a function `setupDebugCallback` to be called from `initVulkan` right
+Now add a function `setupDebugMessenger` to be called from `initVulkan` right
 after `createInstance`:
 
 ```c++
 void initVulkan() {
     createInstance();
-    setupDebugCallback();
+    setupDebugMessenger();
 }
 
-void setupDebugCallback() {
+void setupDebugMessenger() {
     if (!enableValidationLayers) return;
 
 }
 ```
 
-We'll need to fill in a structure with details about the callback:
+We'll need to fill in a structure with details about the messenger and its callback:
 
 ```c++
 VkDebugUtilsMessengerCreateInfoEXT createInfo = {};
@@ -314,10 +309,10 @@ create our own proxy function that handles this in the background. I've added it
 right above the `HelloTriangleApplication` class definition.
 
 ```c++
-VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pCallback) {
+VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
     auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
     if (func != nullptr) {
-        return func(instance, pCreateInfo, pAllocator, pCallback);
+        return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
     } else {
         return VK_ERROR_EXTENSION_NOT_PRESENT;
     }
@@ -329,14 +324,14 @@ couldn't be loaded. We can now call this function to create the extension
 object if it's available:
 
 ```c++
-if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &callback) != VK_SUCCESS) {
-    throw std::runtime_error("failed to set up debug callback!");
+if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
+    throw std::runtime_error("failed to set up debug messenger!");
 }
 ```
 
 The second to last parameter is again the optional allocator callback that we
 set to `nullptr`, other than that the parameters are fairly straightforward.
-Since the debug callback is specific to our Vulkan instance and its layers, it
+Since the debug messenger is specific to our Vulkan instance and its layers, it
 needs to be explicitly specified as first argument. You will also see this
 pattern with other *child* objects later on. Let's see if it works... Run the
 program and close the window once you're fed up with staring at the blank
@@ -344,19 +339,21 @@ window. You'll see that the following messages are printed to the command prompt
 
 ![](/images/validation_layer_test.png)
 
+>If you don't see any messages then [check your installation](https://vulkan.lunarg.com/doc/view/1.1.106.0/windows/getting_started.html#user-content-verify-the-installation).
+
 Oops, it has already spotted a bug in our program! The
 `VkDebugUtilsMessengerEXT` object needs to be cleaned up with a call to
 `vkDestroyDebugUtilsMessengerEXT`. Similarly to `vkCreateDebugUtilsMessengerEXT`
-the function needs to be explicitly loaded. Note that it is normal for this message to be printed multiple times. This happens because multiple validation layers check for for the deletion of the debug messenger.
+the function needs to be explicitly loaded. Note that it is normal for this message to be printed multiple times. This happens because multiple validation layers check for the deletion of the debug messenger.
 
 Create another proxy function right
 below `CreateDebugUtilsMessengerEXT`:
 
 ```c++
-void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT callback, const VkAllocationCallbacks* pAllocator) {
+void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) {
     auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
     if (func != nullptr) {
-        func(instance, callback, pAllocator);
+        func(instance, debugMessenger, pAllocator);
     }
 }
 ```
@@ -367,7 +364,7 @@ outside the class. We can then call it in the `cleanup` function:
 ```c++
 void cleanup() {
     if (enableValidationLayers) {
-        DestroyDebugUtilsMessengerEXT(instance, callback, nullptr);
+        DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
     }
 
     vkDestroyInstance(instance, nullptr);
@@ -381,6 +378,60 @@ void cleanup() {
 When you run the program again you'll see that the error message has
 disappeared. If you want to see which call triggered a message, you can add a
 breakpoint to the message callback and look at the stack trace.
+
+## Debugging instance creation and destruction
+
+Although we've now added debugging with validation layers to the program we're not covering everything quite yet. The `vkCreateDebugUtilsMessengerEXT` call requires a valid instance to have been created and `vkDestroyDebugUtilsMessengerEXT` must be called before the instance is destroyed. This currently leaves us unable to debug any issues in the `vkCreateInstance` and `vkDestroyInstance` calls.
+
+However, if you closely read the [extension documentation](https://github.com/KhronosGroup/Vulkan-Docs/blob/master/appendices/VK_EXT_debug_utils.txt#L120), you'll see that there is a way to create a separate debug utils messenger specifically for those two function calls. It requires you to simply pass a pointer to a `VkDebugUtilsMessengerCreateInfoEXT` struct in the `pNext` extension field of `VkInstanceCreateInfo`. First extract population of the messenger create info into a separate function:
+
+```c++
+void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
+    createInfo = {};
+    createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+    createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+    createInfo.pfnUserCallback = debugCallback;
+}
+
+...
+
+void setupDebugMessenger() {
+    if (!enableValidationLayers) return;
+
+    VkDebugUtilsMessengerCreateInfoEXT createInfo;
+    populateDebugMessengerCreateInfo(createInfo);
+
+    if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
+        throw std::runtime_error("failed to set up debug messenger!");
+    }
+}
+```
+
+We can now re-use this in the `createInstance` function:
+
+```c++
+void createInstance() {
+    ...
+
+    VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
+    if (enableValidationLayers) {
+        createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+        createInfo.ppEnabledLayerNames = validationLayers.data();
+
+        populateDebugMessengerCreateInfo(debugCreateInfo);
+        createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*) &debugCreateInfo;
+    } else {
+        createInfo.enabledLayerCount = 0;
+        
+        createInfo.pNext = nullptr;
+    }
+
+    ...
+}
+```
+
+The `debugCreateInfo` variable is placed outside the if statement to ensure that it is not destroyed before the `vkCreateInstance` call. By creating an additional debug messenger this way it will automatically be used during `vkCreateInstance` and `vkDestroyInstance` and cleaned up after that.
 
 ## Configuration
 

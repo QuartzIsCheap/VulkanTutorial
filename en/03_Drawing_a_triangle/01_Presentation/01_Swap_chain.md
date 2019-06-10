@@ -80,6 +80,9 @@ as we checked in the previous chapter, implies that the swap chain extension
 must be supported. However, it's still good to be explicit about things, and
 the extension does have to be explicitly enabled.
 
+## Enabling device extensions
+
+Using a swapchain requires enabling the `VK_KHR_swapchain` extension first.
 Enabling the extension just requires a small change to the logical device
 creation structure:
 
@@ -87,6 +90,8 @@ creation structure:
 createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
 createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 ```
+
+Make sure to replace the existing line `createInfo.enabledExtensionCount = 0;` when you do so.
 
 ## Querying details of swap chain support
 
@@ -297,7 +302,7 @@ Only the `VK_PRESENT_MODE_FIFO_KHR` mode is guaranteed to be available, so we'll
 again have to write a function that looks for the best mode that is available:
 
 ```c++
-VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> availablePresentModes) {
+VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes) {
     return VK_PRESENT_MODE_FIFO_KHR;
 }
 ```
@@ -308,7 +313,7 @@ images that are as up-to-date as possible right until the vertical blank. So,
 let's look through the list to see if it's available:
 
 ```c++
-VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> availablePresentModes) {
+VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes) {
     for (const auto& availablePresentMode : availablePresentModes) {
         if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
             return availablePresentMode;
@@ -324,7 +329,7 @@ Unfortunately some drivers currently don't properly support
 if `VK_PRESENT_MODE_MAILBOX_KHR` is not available:
 
 ```c++
-VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> availablePresentModes) {
+VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes) {
     VkPresentModeKHR bestMode = VK_PRESENT_MODE_FIFO_KHR;
 
     for (const auto& availablePresentMode : availablePresentModes) {
@@ -406,22 +411,25 @@ void createSwapChain() {
 }
 ```
 
-There is actually one more small things that need to be decided upon, but it's
-so simple that it's not really worth creating separate functions for them. The
-first one is the number of images in the swap chain, essentially the queue
-length. The implementation specifies the minimum amount of images to function
-properly and we'll try to have one more than that to properly implement triple
-buffering.
+Aside from these properties we also have to decide how many images we would like to have in the swap chain. The implementation specifies the minimum number that it requires to function:
+
+```c++
+uint32_t imageCount = swapChainSupport.capabilities.minImageCount;
+```
+
+However, simply sticking to this minimum means that we may sometimes have to wait on the driver to complete internal operations before we can acquire another image to render to. Therefore it is recommended to request at least one more image than the minimum:
 
 ```c++
 uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
+```
+
+We should also make sure to not exceed the maximum number of images while doing this, where `0` is a special value that means that there is no maximum:
+
+```c++
 if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
     imageCount = swapChainSupport.capabilities.maxImageCount;
 }
 ```
-
-A value of `0` for `maxImageCount` means that there is no limit besides memory
-requirements, which is why we need to check for that.
 
 As is tradition with Vulkan objects, creating the swap chain object requires
 filling in a large structure. It starts out very familiarly:
@@ -456,7 +464,7 @@ the rendered image to a swap chain image.
 
 ```c++
 QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
-uint32_t queueFamilyIndices[] = {(uint32_t) indices.graphicsFamily, (uint32_t) indices.presentFamily};
+uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
 
 if (indices.graphicsFamily != indices.presentFamily) {
     createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
@@ -580,9 +588,7 @@ don't need to add any cleanup code.
 
 I'm adding the code to retrieve the handles to the end of the `createSwapChain`
 function, right after the `vkCreateSwapchainKHR` call. Retrieving them is very
-similar to the other times where we retrieved an array of objects from Vulkan.
-First query the number of images in the swap chain with a call to
-`vkGetSwapchainImagesKHR`, then resize the container and finally call it again
+similar to the other times where we retrieved an array of objects from Vulkan. Remember that we only specified a minimum number of images in the swap chain, so the implementation is allowed to create a swap chain with more. That's why we'll first query the final number of images with `vkGetSwapchainImagesKHR`, then resize the container and finally call it again
 to retrieve the handles.
 
 ```c++
@@ -590,10 +596,6 @@ vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
 swapChainImages.resize(imageCount);
 vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
 ```
-
-Note that when we created the swap chain, we passed the number of desired images
-to a field called `minImageCount`. The implementation is allowed to create more
-images, which is why we need to explicitly query the amount again.
 
 One last thing, store the format and extent we've chosen for the swap chain
 images in member variables. We'll need them in future chapters.

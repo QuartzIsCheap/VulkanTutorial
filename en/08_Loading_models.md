@@ -18,7 +18,7 @@ We will use the [tinyobjloader](https://github.com/syoyo/tinyobjloader) library
 to load vertices and faces from an OBJ file. It's fast and it's easy to
 integrate because it's a single file library like stb_image. Go to the
 repository linked above and download the `tiny_obj_loader.h` file to a folder in
-your library directory.
+your library directory. Make sure to use the version of the file from the `master` branch because the latest official release is outdated.
 
 **Visual Studio**
 
@@ -38,7 +38,7 @@ TINYOBJ_INCLUDE_PATH = /home/user/libraries/tinyobjloader
 
 ...
 
-CFLAGS = -std=c++11 -I$(VULKAN_SDK_PATH)/include -I$(STB_INCLUDE_PATH) -I$(TINYOBJ_INCLUDE_PATH)
+CFLAGS = -std=c++17 -I$(VULKAN_SDK_PATH)/include -I$(STB_INCLUDE_PATH) -I$(TINYOBJ_INCLUDE_PATH)
 ```
 
 ## Sample mesh
@@ -139,10 +139,10 @@ void loadModel() {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;
-    std::string err;
+    std::string warn, err;
 
-    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &err, MODEL_PATH.c_str())) {
-        throw std::runtime_error(err);
+    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, MODEL_PATH.c_str())) {
+        throw std::runtime_error(warn + err);
     }
 }
 ```
@@ -159,7 +159,7 @@ faces. Each face consists of an array of vertices, and each vertex contains the
 indices of the position, normal and texture coordinate attributes. OBJ models
 can also define a material and texture per face, but we will be ignoring those.
 
-The `err` string contains errors and warnings that occurred while loading the
+The `err` string contains errors and the `warn` string contains warnings that occurred while loading the
 file, like a missing material definition. Loading only really failed if the
 `LoadObj` function returns `false`. As mentioned above, faces in OBJ files can
 actually contain an arbitrary number of vertices, whereas our application can
@@ -224,9 +224,7 @@ following:
 
 ![](/images/inverted_texture_coordinates.png)
 
-Great, the geometry looks correct, but what's going on with the texture? The
-problem is that the origin of texture coordinates in Vulkan is the top-left
-corner, whereas the OBJ format assumes the bottom-left corner. Solve this by
+Great, the geometry looks correct, but what's going on with the texture? The OBJ format assumes a coordinate system where a vertical coordinate of `0` means the bottom of the image, however we've uploaded our image into Vulkan in a top to bottom orientation where `0` means the top of the image. Solve this by
 flipping the vertical component of the texture coordinates:
 
 ```c++
