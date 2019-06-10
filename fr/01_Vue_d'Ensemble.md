@@ -1,4 +1,4 @@
-﻿Ce chapitre commencera par introduire Vulkan et les problèmes auxquels il s’adresse. Nous nous intéresserons ensuite aux
+Ce chapitre commencera par introduire Vulkan et les problèmes auxquels il s’adresse. Nous nous intéresserons ensuite aux
 éléments requis pour l'affichage d'un premier triangle. Cela vous donnera une vue d'ensemble pour mieux replacer les
 futurs chapitres dans leur contexte. Nous conclurons sur la structure de Vulkan et la manière dont il est communément
 utilisé.
@@ -223,4 +223,4 @@ des erreurs émises par les layers.
 Du fait que Vulkan soit si explicite pour chaque opération et grâce à l’extensivité des validations layers, trouver les
 causes de l’écran noir peut en fait être plus simple qu’avec OpenGL ou Direct3D!
 
-Il reste une dernière étape avant de commencer à coder : mettre en place[l’environnement de développement](!Development_environment).
+Il reste une dernière étape avant de commencer à coder : mettre en place[l’environnement de développement](!fr/Environnement_de_Développement).

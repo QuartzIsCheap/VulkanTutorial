@@ -257,6 +257,6 @@ bool isDeviceSuitable(VkPhysicalDevice device) {
 ```
 
 Bien, c'est tout ce dont nous aurons besoin pour choisir le bon physical device! La prochaine étape est de [créer un 
-logical device](!Drawing_a_triangle/Setup/Logical_device_and_queues) pour servir d'interface.
+logical device](!fr/Drawing_a_triangle/Setup/Logical_device_et_queues) pour servir d'interface.
 
 [Code C++](/code/03_physical_device_selection.cpp)

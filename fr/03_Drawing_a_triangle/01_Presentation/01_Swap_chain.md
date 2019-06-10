@@ -473,7 +473,7 @@ createInfo.oldSwapchain = VK_NULL_HANDLE;
 Ce qui nous laisse avec un dernier champ, `oldSwapChain`. Il est possible avec Vulkan que la swap chain devienne 
 invalide ou mal optimisée pendant que votre application tourne, par exmple parce que la fenêtre a été redimensionnée.
 Dans ce cas la swap chain doit être intégralement recréée et une référence à l'ancienne swap chain doit être fournie.
-C'est un sujet compliqué que nous aborderons [dans un chapitre futur.](!Drawing_a_triangle/Swap_chain_recreation).
+C'est un sujet compliqué que nous aborderons [dans un chapitre futur.](!fr/Drawing_a_triangle/Recréation_de_la_swap_chain).
 Pour le moment, considérons que nous ne devrons jamais créer qu'une swap chain.
 
 Ajoutez un membre donnée pour stocker l'objet `VkSwapchainKHR` :
@@ -503,7 +503,7 @@ void cleanup() {
 
 Lancez maintenant l'application et contemplez la création de la swap chain! Si vous obtenez une erreur de violation 
 d'accès dans `vkCreateSwapchainKHR` ou voyez un message comme `Failed to find 'vkGetInstanceProcAddress' in layer 
-SteamOverlayVulkanLayer.ddl`, allez voir [la FAQ à propos de la layer Steam](!FAQ).
+SteamOverlayVulkanLayer.ddl`, allez voir [la FAQ à propos de la layer Steam](!fr/FAQ).
 
 Essayez de retirer la ligne `createInfo.imageExtent = extent;` avec les validation layers actives. Vous verrez que 
 l'une d'entre elles verra l'erreur et un message vous sera envoyé :

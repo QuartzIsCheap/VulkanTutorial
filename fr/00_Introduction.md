@@ -1,4 +1,4 @@
-﻿## À propos
+## À propos
 
 Ce tutoriel vous enseignera les bases de l'utilisation de l'API [Vulkan](https://www.khronos.org/vulkan/) pour les graphismes
 et le calcul. Vulkan est une nouvelle API créée par le [groupe Khronos](https://www.khronos.org/) (connu pour OpenGL) qui
@@ -109,4 +109,4 @@ Si vous rencontrez un problème en suivant ce tutoriel, vérifiez d'abord dans l
 n'y sont pas déjà listés. Si vous êtes toujours coincé après cela, demandez de l'aide dans la section des commentaires
 du chapitre le plus en lien avec votre problème.
 
-Prêt à vous lancer dans le futur des API graphiques à haute performance? [Allons-y!](!Overview)
+Prêt à vous lancer dans le futur des API graphiques à haute performance? [Allons-y!](!fr/Vue_d'Ensemble)

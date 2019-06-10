@@ -27,7 +27,9 @@
         }
     },
     "ignore": {
-        "files": ["README.md"]
+        "files": ["README.md", "build_ebook.py"],
+        "folders": ["ebook"]
     },
+    "languages": {"en": "English", "fr": "French"},
     "processor": "VulkanLinkProcessor"
 }
