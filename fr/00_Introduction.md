@@ -26,7 +26,7 @@ exposant une API de bien plus haut niveau.
 
 Cela étant dit, présentons quelques prérequis pour ce tutoriel:
 
-* Une carte graphique et un driver compatibles avec Vulkan ([NVIDIA](https://developer.nvidia.com/vulkan-driver), [AMD](http://www.amd.com/en-us/innovations/software-technologies/technologies-gaming vulkan), [Intel](https://software.intel.com/en-us/blogs/2016/03/14/new-intel-vulkan-beta-1540204404graphics-driver-for-windows-78110-1540))
+* Une carte graphique et un driver compatibles avec Vulkan ([NVIDIA](https://developer.nvidia.com/vulkan-driver), [AMD](http://www.amd.com/en-us/innovations/software-technologies/technologies-gaming/vulkan), [Intel](https://software.intel.com/en-us/blogs/2016/03/14/new-intel-vulkan-beta-1540204404graphics-driver-for-windows-78110-1540))
 * De l'expérience avec le C++ (familiarité avec RAII, listes d'initialisation...)
 * Un compilateur compatible C++11 (Visual Studio 2013+, GCC 4.8+)
 * De l'expérience dans le domaine de la programmation graphique
