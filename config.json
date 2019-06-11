@@ -32,5 +32,6 @@
         "folders": ["ebook"]
     },
     "languages": {"en": "English", "fr": "French"},
+    "language": "en",
     "processor": "VulkanLinkProcessor"
 }
