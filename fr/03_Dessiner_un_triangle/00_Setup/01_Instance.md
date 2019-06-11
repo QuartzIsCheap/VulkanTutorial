@@ -168,6 +168,6 @@ Les paramètres de cette fonctions sont évidents. Nous y retrouvons le paramèt
 libération de l'instance.
 
 Avant d'avancer dans les notions plus complexes, créons un moyen de débugger notre programme avec
-[les validations layers!](!fr/Drawing_a_triangle/Setup/Validation_layers).
+[les validations layers!](!fr/Dessiner_un_triangle/Setup/Validation_layers).
 
 [Code C++](/code/01_instance_creation.cpp)

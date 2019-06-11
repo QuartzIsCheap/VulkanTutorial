@@ -191,6 +191,6 @@ void cleanup() {
 ```
 
 Si vous lancez l'application, vous devriez voir une fenêtre appelée "Vulkan" se fermant en cliquant sur la croix.
-Maintenant que nous avons une base pour notre application Vulkan, [créons notre premier objet Vulkan!](!fr/Drawing_a_triangle/Setup/Instance)!
+Maintenant que nous avons une base pour notre application Vulkan, [créons notre premier objet Vulkan!](!fr/Dessiner_un_triangle/Setup/Instance)!
 
 [Code C++](/code/00_base_code.cpp)

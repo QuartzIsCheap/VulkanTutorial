@@ -483,7 +483,7 @@ createInfo.oldSwapchain = VK_NULL_HANDLE;
 Ce qui nous laisse avec un dernier champ, `oldSwapChain`. Il est possible avec Vulkan que la swap chain devienne 
 invalide ou mal optimisée pendant que votre application tourne, par exmple parce que la fenêtre a été redimensionnée.
 Dans ce cas la swap chain doit être intégralement recréée et une référence à l'ancienne swap chain doit être fournie.
-C'est un sujet compliqué que nous aborderons [dans un chapitre futur.](!fr/Drawing_a_triangle/Recréation_de_la_swap_chain).
+C'est un sujet compliqué que nous aborderons [dans un chapitre futur.](!fr/Dessiner_un_triangle/Redimensionnement_de_la_swap_chain).
 Pour le moment, considérons que nous ne devrons jamais créer qu'une swap chain.
 
 Ajoutez un membre donnée pour stocker l'objet `VkSwapchainKHR` :
