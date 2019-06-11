@@ -72,12 +72,16 @@ chargement. Lancez le code et vérifiez que votre carte graphique est capable de
 la disponibilité de la queue de présentation implique que l'extension de la swap chain est supportée. Mais soyons 
 tout de mêmes explicites pour cela aussi.
 
-L'activation de l'extension ne requiert qu'un léger changement à la structure de création du logical device :
+## Activation des extensions du périphériques
+
+L'utilisation d'un swapchain nécessite d'activer l'extension `VK_KHR_swapchain` en premier. L'activation de l'extension ne requiert qu'un léger changement à la structure de création du logical device :
 
 ```c++
 createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
 createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 ```
+
+ Assurez-vous de remplacer la ligne existante `createInfo.enabledExtensionCount = 0;` lorsque vous le faites.
 
 ## Récupérer des détails à propos du support de la swap chain
 
@@ -267,7 +271,7 @@ Seul `VK_PRESENT_MODE_FIFO_KHR` est toujours disponible. Nous aurons donc encore
 un choix, car le mode que nous choisirons préférentiellement est `VK_PRESENT_MODE_MAILBOX_KHR` :
 
 ```c++
-VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> availablePresentModes) {
+VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes) {
     return VK_PRESENT_MODE_FIFO_KHR;
 }
 ```
@@ -275,7 +279,7 @@ VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> avail
 Je pense que le triple buffering est un très bon compromis. Vérifions si ce mode est disponible :
 
 ```c++
-VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> availablePresentModes) {
+VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes) {
     for (const auto& availablePresentMode : availablePresentModes) {
         if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
             return availablePresentMode;
@@ -290,7 +294,7 @@ Malheuresement certains drivers ne supportent pas bien `VK_PRESENT_MODE_FIFO_KHR
 `VK_PRESENT_MODE_IMMEDIATE_MODE` si `VK_PRESENT_MODE_MAILBOX_KHR` n'est pas disponible :
 
 ```c++
-VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> availablePresentModes) {
+VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes) {
     VkPresentModeKHR bestMode = VK_PRESENT_MODE_FIFO_KHR;
 
     for (const auto& availablePresentMode : availablePresentModes) {
@@ -368,20 +372,26 @@ void createSwapChain() {
 }
 ```
 
-Il existe en fait encore une dernière chose que nous devons choisir, mais c'est suffisement simple pour ne pas mériter
-de fonction. Nous devons déterminer le nombre d'images dans la swap chain. L'implémentation spécifie le minimum 
-nécessaire à un bon fonctionnement, et nous essayerons d'en avoir une de plus que ce nombre pour pouvoir implémenter 
-correctement le triple buffering.
+En plus de ces propriétés, nous devons également décider combien d'images nous aimerions avoir dans la chaîne de swap. L'implémentation spécifie le nombre minimum requis pour fonctionner :
+
+```c++
+uint32_t imageCount = swapChainSupport.capabilities.minImageCount;
+```
+
+Cependant, le simple fait de s'en tenir à ce minimum signifie que nous devons parfois attendre que le pilote termine les opérations internes avant de pouvoir acquérir une autre image pour le rendu. Il est donc recommandé de demander au moins une image de plus que le minimum :
 
 ```c++
 uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
+
+```
+
+Nous devrions également nous assurer de ne pas dépasser le nombre maximum d'images en faisant cela, où `0` est une valeur spéciale qui signifie qu'il n'y a pas de maximum :
+
+```c++
 if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
     imageCount = swapChainSupport.capabilities.maxImageCount;
 }
 ```
-
-La valeur `0` pour `maxImageCount` signifie que la seule limite est la mémoire, c'est pourquoi nous devons 
-étudier ce cas séparément.
 
 Comme la tradition le veut avec Vulkan, la création d'une swap chain nécessite de remplir une grande structure. Elle 
 commence d'une manière familière :
@@ -524,8 +534,7 @@ Ces images ont été crées par l'implémentation avec la swap chain et elles se
 destruction de la swap chain, nous n'aurons donc rien à rajouter dans la fonction `cleanup`.
 
 Ajoutons le code pour extraire les références à la fin de `createSwapChain`, juste après l'appel à 
-`vkCreateSwapchainKHR`. L'extraction est quasiment identique à la procédure standard pour récupérer des tableaux 
-d'objets.
+`vkCreateSwapchainKHR`. Les récupérer est très similaire aux autres fois où nous avons récupéré un tableau d'objets de Vulkan. Rappelez-vous que nous n'avons spécifié qu'un nombre minimum d'images dans la chaîne de swap, de sorte que l'implémentation est autorisée à créer une chaîne de swap avec plus. C'est pourquoi nous allons d'abord interroger le nombre final d'images avec `vkGetSwapchainImagesKHR`, puis redimensionner le vecteur et enfin le rappeler pour récupérer les références.
 
 ```c++
 vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
@@ -533,11 +542,7 @@ swapChainImages.resize(imageCount);
 vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
 ```
 
-Notez que lorsque nous avons créé la swap chain nous avons indiqué une valeur `minImageCount`, mais nous ne pouvons 
-nous y fier car l'implémentation peut en créer plus, et c'est pourquoi nous devons demander le nombre d'images.
-
-Une dernière chose : gardez dans des variables le format et le nombre d'images dans la swap chain, nous en aurons 
-besoin dans de futurs chapitres.
+Une dernière chose : gardez dans des variables le format et le nombre d'images dans la swap chain, nous en aurons besoin dans de futurs chapitres.
 
 ```c++
 VkSwapchainKHR swapChain;

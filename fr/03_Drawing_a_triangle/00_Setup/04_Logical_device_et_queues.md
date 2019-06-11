@@ -92,8 +92,7 @@ sur lesquels votre programme a effectué un rendu. Il est en effet possible que 
 capacité, par exemple parce qu'ils ne supportent que les compute shaders. Nous reviendrons sur cette extension
 dans le chapitre dédié à la swap chain.
 
-Comme dit dans le chapitre sur les calidation layers, nous activerons les mêmes que celles que nous avons spécifiées 
-lors de la création de l'instance. Nous n'avons pour l'instant besoin d'aucune validation layer spécifique.
+Les implémentations précédentes de Vulkan faisaient une distinction entre les couches de validation spécifiques aux instances et aux périphériques, mais ce [n'est plus le cas](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#extendingvulkan-layers-devicelayerdeprecation). Cela signifie que les champs `enabledLayerCount` et `ppEnabledLayerNames` de `VkDeviceCreateInfo` sont ignorés par les implémentations à jour. Cependant, c'est quand même une bonne idée de les paramétrer pour qu'ils soient compatibles avec les anciennes implémentations :
 
 ```c++
 createInfo.enabledExtensionCount = 0;
@@ -105,6 +104,8 @@ if (enableValidationLayers) {
     createInfo.enabledLayerCount = 0;
 }
 ```
+
+Nous n'aurons pas besoin d'extensions spécifiques pour le moment.
 
 C'est bon, nous pouvons maintenant instancier le logical device en appelant la fonction `vkCreateDevice`.
 

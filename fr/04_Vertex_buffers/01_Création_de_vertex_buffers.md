@@ -263,6 +263,8 @@ d'accéder à la mémoire
 Nous utiliserons la première approche qui nous assure une cohérence permanente. Cette méthode est moins performante que
 le flushing explicite, mais nous verrons dès le prochain chapitre que cela n'a aucune importance.
 
+Vider des plages de mémoire ou utiliser la bonne memoire de type "tas" signifie que le pilote sera au courant de nos écritures dans la mémoire tampon, mais cela ne signifie pas qu'elles sont réellement visibles sur le GPU pour le moment. Le transfert des données vers le GPU est une opération qui se déroule en arrière-plan et la spécification nous [dit simplement](https://www.khronos.org/registry/vulkan/specs/1.0/html/vkspec.html#synchronization-submission-host-writes) qu'elle est garantie complète dès le prochain appel à `vkQueueSubmit`.
+
 ## Lier le vertex buffer
 
 Il ne nous reste qu'à lier le vertex buffer pour les opérations de rendu. Nous allons pour cela compléter la fonction

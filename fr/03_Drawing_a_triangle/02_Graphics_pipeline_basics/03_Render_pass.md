@@ -140,7 +140,7 @@ Les types d'attachements suivants peuvent être référencés pour une subpasse 
 
 * `pInputAttachments` : attachements lus depuis un shader
 * `pResolveAttachments` : attachements utilisés pour le multisampling d'attachements de couleurs
-* `pDepthStencilAttachment` : attachements pour la profondeur et le stencil
+* `pDepthStencilAttachment` : attachement pour la profondeur et le stencil
 * `pPreserveAttachments` : attachements qui ne sont pas utilisés par cette subpasse mais dont les données doivent 
 être conservées
 

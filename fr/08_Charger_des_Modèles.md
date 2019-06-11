@@ -12,8 +12,7 @@ plus sur l'intégration des vertices dans le programme, plutôt que sur les aspe
 
 Nous utiliserons la librairie [tinyobjloader](https://github.com/syoyo/tinyobjloader) pour charger les vertices et les
 faces depuis un fichier OBJ. Elle est facile à utiliser et à intégrer, car elle est contenue dans un seul fichier.
-Téléchargez-la depuis le lien GitHub, elle est contenue dans le fichier `tiny_obj_loader.h`. Téléchargez bien le fichier
-de la branche `master` car la version "release" n'est plus assez à jour.
+Téléchargez-la depuis le lien GitHub, elle est contenue dans le fichier `tiny_obj_loader.h`. Assurez-vous d'utiliser la version du fichier de la branche `master` car la dernière version n'est plus assez à jour.
 
 **Visual Studio**
 
@@ -138,9 +137,9 @@ Le conteneur `attrib` contient les positions, les normales et les coordonnées d
 faces. Ces dernières se réfèrent donc aux données stockées dans `attrib`. Les modèles peuvent aussi définir un matériau
 et une texture par face, mais nous ignorerons ces attributs pour le moment.
 
-La chaine de caractères `err` contient les erreurs et les messages générés pendant le chargement du fichier. Le
+La chaîne de caractères `err` contient les erreurs et la chaîne de caractères `warn` contient des avertissements qui se sont produits pendant le chargement du fichier. Le
 chargement des fichiers ne rate réellement que quand `LoadObj` retourne `false`. Les faces peuvent être constitués d'un
-nombre quelconque de vertices, alors que notre application ne peut dessiner que des triangles. Heuresement, la fonction
+nombre quelconque de vertices, alors que notre application ne peut dessiner que des triangles. Heureusement, la fonction
 possède la capacité - activée par défaut - de triangulariser les faces.
 
 Nous allons combiner toutes les faces du fichier en un seul modèle. Commençons par itérer sur ces faces.
@@ -193,9 +192,7 @@ Vous pourriez le faire sans mais le chargement du modèle sera très long. Vous 
 
 ![](/images/inverted_texture_coordinates.png)
 
-La géométrie est correcte! Par contre les textures sont quelque peu... étranges. En effet le format OBJ part d'en bas à
-gauche pour les coordonnées de texture, alors que Vulkan part d'en haut à gauche. Il suffit de changer cela pendant le
-chargement du modèle :
+Génial, la géométrie semble correcte, mais que se passe-t-il avec la texture ? Le format OBJ suppose un système de coordonnées où une coordonnée verticale de `0` signifie le bas de l'image, mais nous avons téléchargé notre image dans Vulkan dans une orientation de haut en bas où `0` signifie le haut de l'image. Résolvez ce problème en retournant la composante verticale des coordonnées de la texture :
 
 ```c++
 vertex.texCoord = {

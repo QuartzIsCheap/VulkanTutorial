@@ -71,11 +71,7 @@ layout(location = 1) in vec3 inColor;
 
 layout(location = 0) out vec3 fragColor;
 
-out gl_PerVertex {
-    vec4 gl_Position;
-};
-
-void main() {
+void main() {createUniformBuffer
     gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 0.0, 1.0);
     fragColor = inColor;
 }
@@ -232,13 +228,13 @@ void initVulkan() {
     ...
     createVertexBuffer();
     createIndexBuffer();
-    createUniformBuffer();
+    createUniformBuffers();
     ...
 }
 
 ...
 
-void createUniformBuffer() {
+void createUniformBuffers() {
     VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
     uniformBuffers.resize(swapChainImages.size());
@@ -251,20 +247,28 @@ void createUniformBuffer() {
 ```
 
 Nous allons créer une autre fonction qui mettra à jour le buffer et appliquera à son contenu une transformation à chaque
-frame. Nous n'utiliserons donc pas `vkMapMemory` ici. Le buffer doit être détruit à la fin du programme :
+frame. Nous n'utiliserons donc pas `vkMapMemory` ici. Les données uniformes seront utilisées pour tous les appels de dessin, de sorte que le tampon qui les contient ne devrait être détruit que lorsque nous arrêtons le rendu. Comme cela dépend aussi du nombre d'images de la chaîne de swap, qui peuvent changer après une récréation, nous allons le nettoyer dans `cleanupSwapChain` :
 
 ```c++
-void cleanup() {
-    cleanupSwapChain();
-
-    vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+void cleanupSwapChain() {
+    ...
 
     for (size_t i = 0; i < swapChainImages.size(); i++) {
         vkDestroyBuffer(device, uniformBuffers[i], nullptr);
         vkFreeMemory(device, uniformBuffersMemory[i], nullptr);
     }
+}
+```
 
+Cela signifie que nous devons aussi le recréer dans `recreateSwapChain` :
+
+```c++
+void recreateSwapChain() {
     ...
+
+    createFramebuffers();
+    createUniformBuffers();
+    createCommandBuffers();
 }
 ```
 

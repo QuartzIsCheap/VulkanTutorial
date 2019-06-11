@@ -33,7 +33,7 @@ Cela étant dit, présentons quelques prérequis pour ce tutoriel:
 
 Ce tutoriel ne considérera pas comme acquis les concepts d'OpenGL et de Direct3D, mais il requiert que vous connaissiez
 les bases du graphisme 3D. Il n'expliquera pas non plus les mathématiques derrière la projection de perspective, par
-exemple. Lisez [ce livre](http://opengl.datenwolf.net/gltut/html/index.html) pour une bonne introduction des concepts
+exemple. Lisez [ce livre](https://paroj.github.io/gltut/) pour une bonne introduction des concepts
 des graphismes 3D. D'autres ressources pour le développement d'application graphiques sont :
 * [Ray tracing en un week-end](https://github.com/petershirley/raytracinginoneweekend)
 * [Livre sur le Physical Based Rendering](http://www.pbr-book.org/)

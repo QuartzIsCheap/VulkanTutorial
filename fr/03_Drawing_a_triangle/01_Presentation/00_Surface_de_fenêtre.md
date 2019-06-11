@@ -47,15 +47,11 @@ createInfo.hinstance = GetModuleHandle(nullptr);
 Nous pouvons extraire `HWND` de la fenêtre à l'aide de la fonction `glfwGetWin32Window`. La fonction 
 `GetModuleHandle` fournit une référence au `HINSTANCE` du thread courant.
 
-La surface paut ensuite être crée avec `vkCreatWin32SurfaceKHR`, fonction que nous devons encore charger nous mêmes. 
-L'appel inclut simplement l'instance, la structure contenant les informations, l'allocateur optionnel et un pointeur 
-sur la variable qui contiendra la référence.
+Ensuite, la surface peut être créée avec `vkCreateWin32SurfaceKHR`, qui inclut un paramètre pour l'instance, les détails de création de surface, les allocations personnalisées ansi que variable qui fait reférence à notre object que nous devons stocker. Techniquement, il s'agit d'une fonction d'extension WSI, mais elle est si couramment utilisée que le chargeur Vulkan standard l'inclut, contrairement aux autres extensions, vous n'avez donc pas besoin de la charger explicitement.
 
 ```c++
-auto CreateWin32SurfaceKHR = (PFN_vkCreateWin32SurfaceKHR) vkGetInstanceProcAddr(instance, "vkCreateWin32SurfaceKHR");
-
-if (!CreateWin32SurfaceKHR || CreateWin32SurfaceKHR(instance, &createInfo, nullptr, &surface) != VK_SUCCESS) {
-    throw std::runtime_error("echec lors de la creation d'une window surface!");
+if (vkCreateWin32SurfaceKHR(instance, &createInfo, nullptr, &surface) != VK_SUCCESS) {
+    throw std::runtime_error("failed to create window surface!");
 }
 ```
 

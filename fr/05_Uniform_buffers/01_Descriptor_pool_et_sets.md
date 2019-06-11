@@ -12,7 +12,7 @@ buffers. Nous allons créer la fonction `createDescriptorPool` pour générer un
 ```c++
 void initVulkan() {
     ...
-    createUniformBuffer();
+    createUniformBuffers();
     createDescriptorPool();
     ...
 }
@@ -52,7 +52,7 @@ poolInfo.maxSets = static_cast<uint32_t>(swapChainImages.size());;
 La stucture possède un membre optionnel également présent pour les command pools. Il permet d'indiquer que les
 sets peuvent être libérés indépendemment les uns des autres avec la valeur
 `VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT`. Comme nous ne voulons pas toucher aux descripteurs pendant que le
-programme s'exécute, nous n'avons pas besoin de l'utiliser. Indiquez `0` pour ce champ.
+programme s'exécute, nous n'avons pas besoin de l'utiliser. Vous pouvez laisser les `drapeaux` à leur valeur par défaut de `0`.
 
 ```c++
 VkDescriptorPool descriptorPool;
@@ -64,16 +64,30 @@ if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SU
 }
 ```
 
-Créez un nouveau membre donnée pour référencer la pool, puis appelez `vkCreateDescriptorPool`. La pool doit alors être
-détruite à la fin du programme, comme la plupart des ressources liées au rendu.
+Créez un nouveau membre donnée pour référencer la pool, puis appelez `vkCreateDescriptorPool`. La pool de descripteurs doit être détruit lorsque la chaîne de swap est recréée car cela dépend du nombre d'images :
 
 ```c++
-void cleanup() {
-    cleanupSwapChain();
+void cleanupSwapChain() {
+    ...
+
+    for (size_t i = 0; i < swapChainImages.size(); i++) {
+        vkDestroyBuffer(device, uniformBuffers[i], nullptr);
+        vkFreeMemory(device, uniformBuffersMemory[i], nullptr);
+    }
 
     vkDestroyDescriptorPool(device, descriptorPool, nullptr);
+}
+```
 
+Et recréé dans `recreateSwapChain` :
+
+```c++
+void recreateSwapChain() {
     ...
+
+    createUniformBuffers();
+    createDescriptorPool();
+    createCommandBuffers();
 }
 ```
 
@@ -83,6 +97,13 @@ Nous pouvons maintenant allouer les sets de descipteurs. Créez pour cela la fon
 
 ```c++
 void initVulkan() {
+    ...
+    createDescriptorPool();
+    createDescriptorSets();
+    ...
+}
+
+void recreateSwapChain() {
     ...
     createDescriptorPool();
     createDescriptorSets();
@@ -231,6 +252,126 @@ Maintenant vous devriez voir ceci en lançant votre programme :
 Le rectangle est maintenant un carré car la matrice de projection corrige son aspect. La fonction `updateUniformBuffer`
 traite les redimensionnements d'écran, il n'est donc pas nécessaire de recréer les descripteurs dans
 `recreateSwapChain`.
+
+## Exigences d'alignement
+
+Une chose que nous avons négligé jusqu'ici est comment exactement les données dans la structure C++ doit correspondre à la définition uniforme dans le shader. Il semble assez évident d'utiliser simplement les mêmes types dans les deux :
+
+```c++
+struct UniformBufferObject {
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 proj;
+};
+
+layout(binding = 0) uniform UniformBufferObject {
+    mat4 model;
+    mat4 view;
+    mat4 proj;
+} ubo;
+```
+
+Mais ce n'est pas tout. Par exemple, essayez de modifier la structure et le shader pour qu'ils ressemblent à ceci :
+
+```c++
+struct UniformBufferObject {
+    glm::vec2 foo;
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 proj;
+};
+
+layout(binding = 0) uniform UniformBufferObject {
+    vec2 foo;
+    mat4 model;
+    mat4 view;
+    mat4 proj;
+} ubo;
+```
+
+Recompilez votre shader et votre programme et lancez-le et vous verrez que le carré coloré que vous avez travaillé jusqu'ici a disparu ! C'est parce que nous n'avons pas tenu compte des exigences d'alignement.
+
+Vulkan s'attend à ce que les données de votre structure soient alignées en mémoire d'une manière spécifique, par exemple :
+
+* Les mises à l'échelle doivent être alignées par N (= 4 octets avec des réel de 32 bits).
+* Un `vec2` doit être aligné par 2N (= 8 octets)
+* Un `vec3` ou `vec4` doit être aligné par 4N (= 16 octets)
+* Une structure imbriquée doit être alignée par l'alignement de base de ses membres arrondi à un multiple de 16.
+* Une matrice `mat4` doit avoir le même alignement qu'un `vec4`.
+
+Vous trouverez la liste complète des exigences d'alignement dans [la spécification](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/chap14.html#interfaces-resources-layout).
+
+Notre shader original avec seulement trois champs `mat4` répondait déjà aux exigences d'alignement. Comme chaque `mat4` a une taille de 4 x 4 x 4 = 64 octets, le `model` a un décalage de `0`, `vue` a un décalage de 64 et `proj` a un décalage de 128. Ce sont tous des multiples de 16 et c'est pourquoi ça a bien fonctionné.
+
+La nouvelle structure commence avec un `vec2` qui n'a que 8 octets de taille et supprime donc tous les décalages. Maintenant, `model` a un décalage de `8`, `vue` un décalage de `72` et `proj` un décalage de `136`, dont aucun n'est un multiple de 16. Pour résoudre ce problème, nous pouvons utiliser le spécificateur [`d'alignement`](https://en.cppreference.com/w/cpp/language/alignas) introduit en C++11 :
+
+```c++
+struct UniformBufferObject {
+    glm::vec2 foo;
+    alignas(16) glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 proj;
+};
+```
+
+Si vous compilez et exécutez à nouveau votre programme, vous devriez voir que le shader reçoit à nouveau correctement ses valeurs de matrice.
+
+Heureusement, il existe un moyen de ne pas avoir à penser à ces exigences d'alignement la plupart du temps. Nous pouvons définir `GLM_FORCE_DEFAULT_ALIGNED_GENTYPES` juste avant d'inclure GLM :
+
+```c++
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
+#include <glm/glm.hpp>
+```
+
+Cela forcera GLM à utiliser une version de `vec2` et `mat4` qui a les exigences d'alignement déjà spécifiées pour nous. Si vous ajoutez cette définition, vous pouvez supprimer le spécificateur alignas et votre programme devrait toujours fonctionner.
+
+Malheureusement, cette méthode peut tomber en panne si vous commencez à utiliser des structures imbriquées. Considérons la définition suivante dans le code C+++ :
+
+```c++
+struct Foo {
+    glm::vec2 v;
+};
+
+struct UniformBufferObject {
+    Foo f1;
+    Foo f2;
+};
+```
+
+Et la définition de shader suivante :
+
+```glsl
+struct Foo {
+    vec2 v;
+};
+
+layout(binding = 0) uniform UniformBufferObject {
+    Foo f1;
+    Foo f2;
+} ubo;
+```
+
+Dans ce cas, `f2` aura un décalage de `8` alors qu'il devrait avoir un décalage de `16` puisque c'est une structure imbriquée. Dans ce cas, vous devez spécifier l'alignement vous-même :
+
+```c++
+struct UniformBufferObject {
+    Foo f1;
+    alignas(16) Foo f2;
+};
+```
+
+Ces pièges sont une bonne raison d'être toujours explicite sur l'alignement. De cette façon, vous ne serez pas pris au dépourvu par les symptômes étranges des erreurs d'alignement.
+
+```c++
+struct UniformBufferObject {
+    alignas(16) glm::mat4 model;
+    alignas(16) glm::mat4 view;
+    alignas(16) glm::mat4 proj;
+};
+```
+
+N'oubliez pas de recompiler votre shader après avoir supprimé le champ `foo`.
 
 ## Plusieurs sets de descripteurs
 

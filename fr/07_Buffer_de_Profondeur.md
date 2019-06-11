@@ -333,7 +333,7 @@ l'utilisation de l'attachement de profondeur.
 ## Render pass
 
 Nous allons modifier `createRenderPass` pour inclure l'attachement de profondeur. Spécifiez d'abord un
-`VkAttachementDescription` :
+`VkAttachmentDescription` :
 
 ```c++
 VkAttachmentDescription depthAttachment = {};
@@ -439,6 +439,8 @@ renderPassInfo.pClearValues = clearValues.data();
 Avec Vulkan, `0.0` correspond au plan near et `1.0` au plan far. La valeur initiale doit donc être `1.0`, afin que tout
 fragment puisse s'y afficher.
 
+Notez que l'ordre de `clearValues` doit être identique à celui de vos pièces jointes.
+
 ## État de profondeur et de stencil
 
 L'attachement de profondeur est prêt à être utilisé, mais le test de profondeur n'a pas encore été activé. Il est
@@ -501,6 +503,12 @@ La résolution du buffer de profondeur doit changer avec la fenêtre quand elle 
 
 ```c++
 void recreateSwapChain() {
+    int width = 0, height = 0;
+    while (width == 0 || height == 0) {
+        glfwGetFramebufferSize(window, &width, &height);
+        glfwWaitEvents();
+    }
+
     vkDeviceWaitIdle(device);
 
     cleanupSwapChain();
@@ -511,6 +519,9 @@ void recreateSwapChain() {
     createGraphicsPipeline();
     createDepthResources();
     createFramebuffers();
+    createUniformBuffers();
+    createDescriptorPool();
+    createDescriptorSets();
     createCommandBuffers();
 }
 ```

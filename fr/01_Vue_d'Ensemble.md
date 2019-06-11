@@ -81,6 +81,8 @@ l’utilisera en temps voulu pour l’affichage à l’écran. Le nombre de cibl
 du mode utilisé lors du paramétrage de la swap chain. Ceux-ci peuvent être le double buffering (vsync) ou le triple
 buffering. Nous détaillerons tout cela dans le chapitre dédié à la swap chain.
 
+Certaines plates-formes vous permettent d'effectuer un rendu directement sur un affichage sans interagir avec un gestionnaire de fenêtres via les extensions `VK_KHR_display` et `VK_KHR_display_swapchain`. Ceux-ci vous permettent de créer une surface qui représente l'ensemble de l'écran et peut être utilisée pour implémenter votre propre gestionnaire de fenêtres, par exemple.
+
 ### Étape 4 - Image views et framebuffers
 
 Pour dessiner sur une image originaire de la swap chain, nous devons la convertir en une VkImageView puis en un

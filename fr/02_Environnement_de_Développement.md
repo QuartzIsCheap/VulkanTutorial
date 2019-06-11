@@ -161,6 +161,10 @@ Entrez les noms des fichiers objets GLFW et Vulkan :
 
 ![](/images/vs_dependencies.png)
 
+Et enfin changer le compilateur pour qu'il supporte les fonctionnalités C+++17 :
+
+![](/images/vs_cpp17.png)
+
 Vous pouvez enfin fermer le dialogue de propriétés. Si vous avez tout fait correctement vous ne devriez plus voir
 d'erreur dans votre code.
 
@@ -217,8 +221,8 @@ Compilez les exemples Vulkan ainsi :
 ./build_examples.sh
 ```
 
-Si la compilation a été un succès, vous avez normalement un exécutable "./examples/build/cube". Lancez-le depuis le
-dossier "examples/build" avec la commande "./cube" et assurez-vous que vous obtenez la fenêtre suivante :
+Si la compilation a été un succès, vous avez normalement un exécutable `./examples/build/vkcube`. Lancez-le depuis le
+dossier `examples/build` avec la commande `./vkcube` et assurez-vous que vous obtenez la fenêtre suivante :
 
 ![](/images/cube_demo_nowindow.png)
 
@@ -312,7 +316,7 @@ int main() {
 
 Nous allons maintenant créer un makefile pour compiler et lancer ce code. Créez un fichier "makefile". Je pars du
 principe que vous connaissez déjà les bases de makefile, dont les variables et les règles. Sinon vous pouvez trouver des
-introductions claires sur internet, par exemple [ici](http://mrbook.org/blog/tutorials/make/).
+introductions claires sur internet, par exemple [ici](https://makefiletutorial.com/).
 
 Nous allons d'abord définir quelques variables pour simplifier le reste du fichier. Définissez `VULKAN_SDK_PATH` se
 référant à l'emplacement du dossier "x86_64" dans le SDK, par exemple :

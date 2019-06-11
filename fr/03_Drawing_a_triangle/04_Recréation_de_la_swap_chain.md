@@ -89,7 +89,7 @@ void cleanup() {
     vkDestroyDevice(device, nullptr);
 
     if (enableValidationLayers) {
-        DestroyDebugReportCallbackEXT(instance, callback, nullptr);
+        DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
     }
 
     vkDestroySurfaceKHR(instance, surface, nullptr);
@@ -213,8 +213,7 @@ if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebu
 }
 ```
 
-Pour détecter les redimensionnements de la fenêtre nous n'avons qu'à mettre en place `glfwSetFrameBufferSizeCallback`
-qui nous informera d'un changement de la taille du framebuffer associé à la fenêtre :
+Il est important de le faire après `vkQueueuePresentKHR` pour s'assurer que les sémaphores sont dans un état cohérent, sinon un sémaphore signalé pourrait ne jamais être correctement attendu. Maintenant, pour détecter les redimensionnements, nous pouvons utiliser la fonction `glfwSetFramebufferSizeCallback` du framework GLFW pour configurer un callback :
 
 ```c++
 void initWindow() {
@@ -232,7 +231,7 @@ static void framebufferResizeCallback(GLFWwindow* window, int width, int height)
 ```
 
 Nous devons utiliser une fonction statique car GLFW ne sait pas correctement appeler une fonction membre d'une classe
-avec `this`.
+avec `this` pointeur vers notre instance `HelloTriangleApplication`.
 
 Nous récupérons une référence à la `GLFWwindow` dans la fonction de rappel que nous fournissons. De plus nous pouvons
 paramétrer un pointeur de notre choix qui sera accessible à toutes nos fonctions de rappel. Nous pouvons y mettre la 

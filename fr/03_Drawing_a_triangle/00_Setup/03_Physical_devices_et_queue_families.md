@@ -203,7 +203,7 @@ struct QueueFamilyIndices {
 };
 ```
 
-Il est nécessaire d'inclure `optional`. Nous pouvons dès maintenant implémenter `findQueueFamilies` :
+Il est nécessaire d'inclure `<optional>`. Nous pouvons dès maintenant implémenter `findQueueFamilies` :
 
 ```c++
 QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) {
