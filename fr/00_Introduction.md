@@ -10,13 +10,13 @@ surprenants comparés à des APIs existantes comme [OpenGL](https://en.wikipedia
 mais Vulkan a l'avantage d'être complètement cross-platform et vous permet ainsi de développer pour Windows, Linux et
 Android en même temps.
 
-Cependant, le prix à payer pour ces avantages est que vous devrez travailler avec une API beaucoup plus l'API verbeuse. Chaque
+Cependant, le prix à payer pour ces avantages est que vous devrez travailler avec une API beaucoup plus verbeuse. Chaque
 détail lié à l'API graphique doit être créé à partir de rien par votre application, dont la mise en place d'un
-framebuffer initial et la gestion de la mémoire pour les objets tels que les buffers et les textures. Le travail du driver graphique serai
+framebuffer initial et la gestion de la mémoire pour les objets tels que les buffers et les textures. Le travail du driver graphique est
 beaucoup plus limité, ce qui implique un plus grand travail de votre application pour assurer un comportement correct.
 
 Le message à retenir ici est que Vulkan n'est pas fait pour tout le monde. Il cible les programmeurs concernés par la
-programmation graphique de haute performance, et qui sont prêts à y travailler sérieusement. Si vous êtes plus
+programmation graphique de haute performance, et qui sont prêts à s'y plonger sérieusement. Si vous êtes plus
 intéressées dans le développement de jeux vidéos, plutôt que dans les graphismes eux-mêmes, vous devriez plutôt
 continuer d'utiliser OpenGL et DirectX, qui ne seront pas dépréciés en faveur de Vulkan avant un certain temps. Une autre
 alternative serait d'utiliser un moteur de jeu comme
@@ -36,7 +36,7 @@ les bases du graphisme 3D. Il n'expliquera pas non plus les mathématiques derri
 exemple. Lisez [ce livre](https://paroj.github.io/gltut/) pour une bonne introduction des concepts
 des graphismes 3D. D'autres ressources pour le développement d'application graphiques sont :
 * [Ray tracing en un week-end](https://github.com/petershirley/raytracinginoneweekend)
-* [Livre sur le Physical Based Rendering](http://www.pbr-book.org/)
+* [Livre sur le Physically Based Rendering](http://www.pbr-book.org/)
 * Une application de Vulkan dans les moteurs graphiques open source de [Quake](https://github.com/Novum/vkQuake) et
 [DOOM 3](https://github.com/DustinHLand/vkDOOM3)
 
@@ -48,7 +48,7 @@ organiser la logique et la durée de vie des ressources. Il existe aussi une [ve
 Pour faciliter la tâche des développeurs utilisant d'autres langages de programmation, et pour acquérir de l'expérience
 avec l'API de base, nous allons utiliser l'API C originelle pour travailler avec Vulkan. Cependant, si vous utilisez le C++, vous pourrez
 préférer utiliser le binding [Vulkan-Hpp](https://github.com/KhronosGroup/Vulkan-Hpp) plus récent, qui permet de s'abstraire du sale boulot,
-et permet d'éviter certains types d'erreurs.
+et permet d'éviter les redondances et certains types d'erreurs.
 
 ## E-book
 
@@ -96,7 +96,7 @@ d'arriver à un résultat n'ont pas encore été déterminées. Si vous avez un 
 lui-même, n'hésitez alors pas à créer une issue ou une pull request sur le [dépôt GitHub](https://github.com/Overv/VulkanTutorial).
 Vous pouvez *watch* le dépôt afin d'être notifié des dernières mises à jour du tutoriel.
 
-Après que vous avez accompli le rituel de l'affichage de votre premier triangle en Vulkan, nous étendrons le programme pour y
+Après que vous aurez accompli le rituel de l'affichage de votre premier triangle en Vulkan, nous étendrons le programme pour y
 inclure les transformations linéaires, les textures et les modèles 3D.
 
 Si vous avez déjà utilisé une API graphique auparavant, vous devez savoir qu'il y a nombre d'étapes avant d'afficher la
